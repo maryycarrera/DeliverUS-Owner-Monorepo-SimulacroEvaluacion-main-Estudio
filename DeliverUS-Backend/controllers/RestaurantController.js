@@ -5,6 +5,7 @@ const Product = models.Product
 const RestaurantCategory = models.RestaurantCategory
 const ProductCategory = models.ProductCategory
 
+// Solución
 exports.index = async function (req, res) {
   try {
     const restaurants = await Restaurant.findAll(
@@ -15,7 +16,7 @@ exports.index = async function (req, res) {
         model: RestaurantCategory,
         as: 'restaurantCategory'
       },
-        order: [['isPromoted', { model: RestaurantCategory, as: 'restaurantCategory' }, 'name', 'ASC']]
+        order: [['isPromoted', 'DESC'], [{ model: RestaurantCategory, as: 'restaurantCategory' }, 'name', 'ASC']]
       }
     )
     res.json(restaurants)
@@ -24,12 +25,14 @@ exports.index = async function (req, res) {
   }
 }
 
+// Solución
 exports.indexOwner = async function (req, res) {
   try {
     const restaurants = await Restaurant.findAll(
       {
         attributes: ['id', 'name', 'description', 'address', 'postalCode', 'url', 'shippingCosts', 'averageServiceMinutes', 'email', 'phone', 'logo', 'heroImage', 'status', 'restaurantCategoryId', 'isPromoted'],
-        where: { userId: req.user.id }
+        where: { userId: req.user.id },
+        order: [['isPromoted', 'DESC']]
       })
     res.json(restaurants)
   } catch (err) {
@@ -109,21 +112,33 @@ exports.destroy = async function (req, res) {
   }
 }
 
+// Solución
 exports.promote = async function (req, res) {
-  const transaction = await models.sequelize.transaction()
+  const t = await models.sequelize.transaction()
   try {
-    let previouslyPromotedRestaurant = await Restaurant.findAll({ where: { userId: req.user.id, isPromoted: true } })
-    if (previouslyPromotedRestaurant !== null) {
-      previouslyPromotedRestaurant.isPromoted = false
-      previouslyPromotedRestaurant = await previouslyPromotedRestaurant.save({ transaction })
+    const previouslyPromotedRestaurant = await Restaurant.findOne({ where: { userId: req.user.id, isPromoted: true } })
+    if (previouslyPromotedRestaurant) {
+      // previouslyPromotedRestaurant.isPromoted = false
+      // previouslyPromotedRestaurant = await previouslyPromotedRestaurant.save({ transaction })
+      await Restaurant.update(
+        { isPromoted: false },
+        { where: { id: previouslyPromotedRestaurant.id } },
+        { transaction: t }
+      )
     }
 
-    await Restaurant.update(req.body, { where: { id: req.params.restaurantId } })
+    // await Restaurant.update(req.body, { where: { id: req.params.restaurantId } })
+    // const restaurantToBePromoted = await Restaurant.findByPk(req.params.restaurantId)
+    await Restaurant.update(
+      { isPromoted: true },
+      { where: { id: req.params.restaurantId } },
+      { transaction: t }
+    )
+    await t.commit()
     const restaurantToBePromoted = await Restaurant.findByPk(req.params.restaurantId)
-    await transaction.commit()
     res.json(restaurantToBePromoted)
   } catch (error) {
-    await transaction.rollback()
+    await t.rollback()
     res.status(500).send(error)
   }
 }

@@ -88,8 +88,9 @@ module.exports = {
           key: 'id'
         }
       },
+      // Solución
       isPromoted: {
-        allowNull: false,
+        // allowNull: false,
         type: Sequelize.BOOLEAN,
         defaultValue: false
       }

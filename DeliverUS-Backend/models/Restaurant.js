@@ -68,7 +68,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.DATE,
       defaultValue: new Date()
     },
-    isPromoted: DataTypes.BOOLEAN
+    // Solución
+    isPromoted: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false
+    }
   }, {
     sequelize,
     modelName: 'Restaurant'

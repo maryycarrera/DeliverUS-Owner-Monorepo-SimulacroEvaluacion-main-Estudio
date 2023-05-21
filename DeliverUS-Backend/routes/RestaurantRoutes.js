@@ -43,9 +43,9 @@ module.exports = (options) => {
       middlewares.hasRole('owner'),
       middlewares.checkEntityExists(Restaurant, 'restaurantId'),
       middlewares.checkRestaurantOwnership,
-      upload,
-      RestaurantValidation.promote,
-      middlewares.handleValidation,
+      // upload,
+      // RestaurantValidation.promote,
+      // middlewares.handleValidation,
       RestaurantController.promote
     )
 
